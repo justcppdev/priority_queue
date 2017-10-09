@@ -1,60 +1,80 @@
 #include <iostream>
-#include <vector>
 
 #include "priority_queue.hpp"
 
-auto calculate_iteration_count( priority_queue_t<size_t> & fruit_backet, size_t fruits_size_limit) -> size_t
+class request
 {
-    size_t attempt_count = 0;
-    while( !fruit_backet.empty() ) {
-        size_t size_of_selected_fruits = 0;
-        std::vector<size_t> selected_fruits;
-        while( !fruit_backet.empty() && size_of_selected_fruits + *fruit_backet.top() <= fruits_size_limit ) {
-            auto fruit_size = *fruit_backet.pop();
-            selected_fruits.push_back( fruit_size );
-            size_of_selected_fruits += fruit_size;
-        }
-
-        for( auto fruit_size : selected_fruits ) {
-            if( fruit_size != 1 ) {
-                fruit_size /= 2;
-                fruit_backet.push( fruit_size );
-            }
-        }
-        
-        ++attempt_count;
+public:
+    using size_type = std::size_t;
+    request( size_type start, size_type duration ) : 
+        start_{ start }, 
+        finish_{ start + duration } 
+    {
     }
 
-    return attempt_count;
-}
+    auto start() const -> size_type
+    {
+        return start_;
+    }
+
+    auto finish() const -> size_type
+    {
+        return finish_;
+    }
+private:
+    size_type start_;
+    size_type finish_;
+};
 
 int main()
 {
-    size_t fruits_count;
-    size_t fruits_size_limit;
-
-    std::cin >> fruits_count;
-    if( std::cin ) {
-        std::vector<size_t> fruits;
-        fruits.reserve( fruits_count );
-        for(size_t index = 0; index < fruits_count; ++index ) {
-            size_t fruit_size;
-            std::cin >> fruit_size;
-            if( std::cin ) {
-                fruits.push_back( fruit_size );
-            }
-            else {
-                return EXIT_FAILURE;
-            }
-        }
-        priority_queue_t<size_t> fruit_backet( fruits_count );
-        fruit_backet.fill( fruits.cbegin(), fruits.cend() );
-        std::cin >> fruits_size_limit;
-        if( std::cin ) {
-            std::cout << calculate_iteration_count( fruit_backet, fruits_size_limit );
-            return EXIT_SUCCESS;
+    /*
+     В большой IT-фирме есть только одна переговорная комната. Желающие посовещаться заполняют заявки с желаемым временем начала и конца. Ваша задача определить максимальное количество заявок, которое может быть удовлетворено. Число заявок ≤ 100000.
+     
+     Формат ввода
+     
+     Вход содержит только пары целых чисел — начала и продолжительности заявок.
+     
+     Формат вывода
+     
+     Выход должен содержать натуральное число — максимальное число заявок.
+     
+    1 1
+    2 3
+    7 3
+    2 1
+    6 1
+    4 3
+    3 3
+    3 2
+    1 1
+    4 1
+     
+     5
+    */
+    
+    auto comparator = []( request const & lhs, request const & rhs ) {
+        return rhs.finish() < lhs.finish();
+    };
+    priority_queue_t<request, decltype(comparator)> queue( 0, comparator );
+    
+    for( size_t start, duration; std::cin >> start && std::cin >> duration; ) {
+        queue.push( {start, duration} );
+    }
+    
+    unsigned int max_request_count = 0;
+    request::size_type finish = 0;
+    while( !queue.empty() ) {
+        auto request = queue.top();
+        queue.pop();
+        
+        if( request->start() >= finish ) {
+            ++max_request_count;
+            finish = request->finish();
         }
     }
-
-    return EXIT_FAILURE;
+    
+    std::cout << max_request_count << std::endl;
+    
+    return 0;
 }

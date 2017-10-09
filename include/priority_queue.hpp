@@ -10,7 +10,9 @@ template <typename T, typename Compare = std::less<T>>
 class priority_queue_t
 {
 public:
-    explicit priority_queue_t( size_t size = 0 );
+    using size_type = std::size_t;
+    
+    priority_queue_t( size_type size = 0, Compare comparator = Compare{} );
     
     auto elements() const -> std::vector<T>;
     
@@ -28,21 +30,21 @@ public:
     bool empty() const noexcept;
 private:
     std::vector<std::shared_ptr<T>> elements_;
+    Compare comparator_;
     
-    auto sift_up( size_t index ) /*noexcept(<))*/ -> void;
+    auto sift_up( size_type index ) /*noexcept(<))*/ -> void;
     
-    auto sift_down( size_t index ) -> void;
+    auto sift_down( size_type index ) -> void;
     
     auto build_heap() -> void;
 };
 
 template <typename T, typename Compare>
-void priority_queue_t<T, Compare>::sift_up( size_t index ) /*noexcept(<))*/
+void priority_queue_t<T, Compare>::sift_up( size_type index ) /*noexcept(<))*/
 {
-    Compare comparator;
     while( index != 0 ) {
         auto parent = ( index - 1 ) / 2;
-        if( comparator( *elements_[ index ], *elements_[ parent ] ) ) {
+        if( comparator_( *elements_[ parent ], *elements_[ index ] ) ) {
             elements_[ index ].swap( elements_[ parent ] );
             index = parent;
         }
@@ -53,17 +55,18 @@ void priority_queue_t<T, Compare>::sift_up( size_t index ) /*noexcept(<))*/
 }
 
 template <typename T, typename Compare>
-void priority_queue_t<T, Compare>::sift_down( size_t index )
+void priority_queue_t<T, Compare>::sift_down( size_type index )
 {
     auto left = index * 2 + 1;
     auto right = index * 2 + 2;
     
     auto largest = index;
-    Compare comparator;
-    if( left < elements_.size() && comparator( *elements_[ left ], *elements_[ largest ] ) ) {
+    if( left < elements_.size() && 
+        comparator_( *elements_[ largest ], *elements_[ left ] ) ) {
         largest = left;
     }
-    if( right < elements_.size() && comparator( *elements_[ right ], *elements_[ largest ] ) ) {
+    if( right < elements_.size() && 
+        comparator_( *elements_[ largest ], *elements_[ right ] ) ) {
         largest = right;
     }
     
@@ -76,14 +79,17 @@ void priority_queue_t<T, Compare>::sift_down( size_t index )
 template <typename T, typename Compare>
 auto priority_queue_t<T, Compare>::build_heap() -> void
 {
-    for( size_t index = elements_.size() / 2; index != 0; ) {
+    for( size_type index = elements_.size() / 2; index != 0; ) {
         --index;
         sift_down( index );
     }
 }
 
 template <typename T, typename Compare>
-priority_queue_t<T, Compare>::priority_queue_t( size_t size ) : elements_{}
+priority_queue_t<T, Compare>::priority_queue_t( size_type size,
+                                                Compare comparator ) : 
+    elements_{},
+    comparator_{ comparator }
 {
     elements_.reserve( size );
 }
@@ -94,7 +100,10 @@ auto priority_queue_t<T, Compare>::elements() const -> std::vector<T>
     std::vector<T> result;
     result.reserve( elements_.size() );
     
-    std::transform( elements_.cbegin(), elements_.cend(), std::back_inserter( result ), []( std::shared_ptr<T> element ) {
+    std::transform( elements_.cbegin(), 
+                    elements_.cend(), 
+                    std::back_inserter( result ), 
+                    []( std::shared_ptr<T> element ) {
         return *element;
     } );
     
@@ -103,7 +112,8 @@ auto priority_queue_t<T, Compare>::elements() const -> std::vector<T>
 
 template <typename T, typename Compare>
 template <typename InputIterator>
-void priority_queue_t<T, Compare>::fill( InputIterator begin, InputIterator end ) /*strong*/
+void priority_queue_t<T, Compare>::fill( InputIterator begin, 
+                                         InputIterator end ) /*strong*/
 {
     std::vector<std::shared_ptr<T>> elements;
     std::transform( begin, end, back_inserter( elements ), []( auto && value ) {
