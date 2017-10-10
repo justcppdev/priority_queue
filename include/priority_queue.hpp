@@ -1,10 +1,10 @@
 #ifndef QUEUE_PRIORITY_HPP 
 #define QUEUE_PRIORITY_HPP
 
+#include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <vector>
-#include <algorithm>
 
 template <typename T, typename Compare = std::less<T>>
 class priority_queue_t
@@ -50,8 +50,8 @@ bool priority_queue_t<T, Compare>::increase( T const & old_value,
     }
 
     for( unsigned int index = 0; index < elements_.size(); ++index ) {
-        if( elements_[ index ] == old_value ) {
-            elements_[ index ] = new_value;
+        if( *elements_[ index ] == old_value ) {
+            elements_[ index ] = std::make_shared<T>( new_value );
             sift_up( index );
 
             return true;
