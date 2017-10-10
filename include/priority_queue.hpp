@@ -28,6 +28,8 @@ public:
     auto top() -> std::shared_ptr<T>;
     
     bool empty() const noexcept;
+    
+    bool decrease( T const & old_value, T const & new_value );
 private:
     std::vector<std::shared_ptr<T>> elements_;
     Compare comparator_;
@@ -74,6 +76,25 @@ void priority_queue_t<T, Compare>::sift_down( size_type index )
         elements_[ index ].swap( elements_[ largest ] );
         sift_down( largest );
     }
+}
+
+template <typename T, typename Compare>
+bool priority_queue_t<T, Compare>::decrease( T const & old_value, T const & new_value )
+{
+    if( comparator_( old_value, new_value ) ) {
+        throw std::logic_error("old value is less than new value");
+    }
+    
+    for( size_type index = 0; index < elements_.size(); ++index ) {
+        if( elements_[ index ] == old_value ) {
+            elements_[ index ] = new_value;
+            sift_up( index );
+            
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 template <typename T, typename Compare>
