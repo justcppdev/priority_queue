@@ -1,5 +1,5 @@
-#ifndef QUEUE_PRIORITY_HPP 
-#define QUEUE_PRIORITY_HPP
+#ifndef PRIORITY_QUEUE_HPP 
+#define PRIORITY_QUEUE_HPP
 
 #include <algorithm>
 #include <memory>
